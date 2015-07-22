@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# WELCOME!
+
+???
+
+Intro: I'm fabien etc...
+work at brandwatch
+like functional shite
+
+---
+
+# What the functor?
+
+Wikipedia says:
+> A functor is a mapping between two categories
+
+???
+
+This is what you'll find if you google functor
+This doesn;t really mean much, so let's take a step back and look at a problem I have
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+    if (user) {
+        var posts = BlogPosts.findByUser(user);
+        if (posts) {
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+            if (comments) {
+                return comments; 
+            }
+            return null;
+        }
+        return null;
+    }
+    return null;
+}
+```
+
+???
+
+Give people time to read the code, check that understand what it does
+Maybe mention that it is syncronous
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+*   if (user) {
+        var posts = BlogPosts.findByUser(user);
+*       if (posts) {
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+*           if (comments) {
+                return comments; 
+            }
+            return null;
+        }
+        return null;
+    }
+    return null;
+}
+```
+
+???
+
+Ew fucking checks all over the place
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+    if (user) {
+        var posts = BlogPosts.findByUser(user);
+        if (posts) {
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+            if (comments) {
+                return comments; 
+            }
+*           return null;
+        }
+*       return null;
+    }
+*   return null;
+}
+```
+
+???
+
+Yeah we explictly return, we don't have to I just prefer null as the lack of a value
+
+What we're going to do next is find a way to remove all these checks we can't pass the values to our functions because they might throw
+We need a way of doing the function, if the thing exists. So i;m going to suggest wrapping it up, with a do method
+
+---
+
+# Abstractions!
+
+```javascript
+function wrap(thing){
+    return {
+        do: function(fn) {
+                        
+                                   
+             
+                        
+        }
+    }
+}
+```
+
+???
+
+So heres our basic wrap function, takes a thing, returns an object with a do method
+
+---
+
+# Abstractions!
+
+```javascript
+function wrap(thing){
+    return {
+        do: function(fn) {
+                        
+                                   
+             
+            return this;
+        }
+    }
+}
+```
+
+???
+
+We return this from the do method, because we're going to want to chain this (possibly)
+
+Also note, that because we return this, each time we do a function, we'll get a wrapped thing back
+
+---
+
+# Abstractions!
+
+```javascript
+function wrap(thing){
+    return {
+        do: function(fn) {
+            if (thing) {
+                thing = fn(thing); 
+            }
+            return this;
+        }
+    }
+}
+```
+
+???
+
+Finally the implementation, if the thing exists, do the function to it, otherwise don't
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+    if (user) {
+        var posts = BlogPosts.findByUser(user);
+        if (posts) {
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+            if (comments) {
+                return comments; 
+            }
+            return null;
+        }
+        return null;
+    }
+    return null;
+}
+```
+
+???
+
+So this is the code we had before and we want to remove the if's
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+               
+        var posts = BlogPosts.findByUser(user);
+        if (posts) {
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+            if (comments) {
+                return comments; 
+            }
+            return null;
+        }
+        return null;
+     
+                
+}
+```
+
+???
+
+And again
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+               
+        var posts = BlogPosts.findByUser(user);
+                    
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+            if (comments) {
+                return comments; 
+            }
+            return null;
+         
+                    
+     
+                
+}
+```
+
+???
+
+and again
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+               
+        var posts = BlogPosts.findByUser(user);
+                    
+            var postsIds = _.map(post => post.id, posts);
+            var comments = Comments.findMany(postIds);
+                           
+                return comments; 
+             
+                        
+         
+                    
+     
+                
+}
+```
+
+???
+
+And finally
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Users.find(username);
+
+    var posts = BlogPosts.findByUser(user);
+
+    var postsIds = _.map(post => post.id, posts);
+    var comments = Comments.findMany(postIds);
+
+    return comments; 
+}
+```
+
+???
+
+Let's indent
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+                                              
+
+                                                    
+                                                 
+
+                    
+}
+```
+
+???
+
+So we wrap up our user
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+                                                    
+                                                 
+
+                    
+}
+```
+
+???
+
+do the finding of blog posts 
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+                    
+}
+```
+
+???
+
+Do the getting of the posts ids and then find the comments
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments;
+}
+```
+
+???
+
+And return the comments!
+
+Anyone see anything wrong with this?
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+*   return comments;
+}
+```
+
+???
+
+Right, these aren't comments any more, ballache
+
+---
+
+# Abstractions!
+
+```javascript
+function wrap(thing){
+    return {
+        do: function(fn) {
+            if (thing) {
+                thing = fn(thing); 
+            }
+            return this;
+        }
+    }
+}
+```
+
+???
+
+Looking at our wrap function again, we need a way of getting the thing out, so we can return it
+
+---
+
+# Abstractions!
+
+```javascript
+function wrap(thing){
+    return {
+        do: function(fn) {
+            if (thing) {
+                thing = fn(thing); 
+            }
+            return this;
+        },
+        get: function(){
+            return thing; 
+        }
+    }
+}
+```
+
+???
+
+So we add our simple get method
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+*   return comments.get();
+}
+```
+
+???
+
+And we're fixed, the same functionality as before, but the function is much more descriptiive of what it does, win!
+
+---
+
+# So Functors huh?
+
+Wikipedia says:
+> A functor is a mapping between two categories
+
+???
+
+What does this mean?
+
+--
+
+> A functor `F` that maps from "C" to "D" is a mapping that: 
+
+>    - associates each object `X` in "C" to an object `F[X]` in "D" 
+
+???
+
+Explain that this might not mean anything, but will be explained in a sec
+Object can be thought of as a thing, in the category of numbers, an object is 1 or 5
+
+--
+
+>    - associates each morphism `X -> Y` in "C" to a morphism `F[X] -> F[Y]` in "D"
+
+???
+
+Explain again this will be done in a sec
+
+In the category of numbers, a morphism is + or *
+
+---
+
+# What do we have?
+
+- A "category" of JavaScript values(objects*), we'll call "C"
+
+--
+
+- A "category" of "wrapped" values(objects*), we'll call "D"
+
+--
+
+- A way of associating each value(object*) in "C" with a wrapped value (`F[X]`) using the `wrap` function
+
+--
+
+- A way of associating each function(morphism) that act's open values in "C" to a morphism that act's upon values in "D", the `do` method.
+
+---
+
+# Formal syntax
+
+Although technically our `wrap` function is a Functor, there are a few changes we should make.
+
+--
+
+- Use a Constructor or Class
+
+???
+
+It can be useful when dealing with this abstractions to be able to test for instanceof
+Prototype keep memory usage down
+
+--
+
+- Use an fmap method, not do
+
+???
+
+We use fmap to follow suite with the haskel implemenations
+Interoperablity between
+Can use map, but personally prefer fmap, map is a bit common place
+
+--
+
+- Return a new Functor from the fmap method, don't mutate.
+
+???
+
+Because why? because mutation of state causes bullshit problems
+
+--
+
+- Implement a toString method
+
+???
+
+Not essential, but debugging gets a hella lot easier
+
+---
+
+# Maybe
+
+The wrap Functor that we created previous is one of the most well known.
+
+It's called the Maybe or Option Functor.
+
+It has two subtypes:
+
+--
+
+- Just - This is the Functor that actually has a value inside.
+
+--
+
+- Nothing - This, suprisingly, has nothing inside.
+
+---
+
+# Maybe
+
+Here is a simple implementation of Maybe
+
+```javascript
+function Maybe(val){
+                      
+                              
+            
+                          
+     
+}
+
+```
+
+---
+
+# Maybe
+
+Here is a simple implementation of Maybe
+
+```javascript
+function Maybe(val){
+    if (val != null) {
+        return new Just(val); 
+    }
+                          
+     
+}
+
+```
+
+---
+
+# Maybe
+
+Here is a simple implementation of Maybe
+
+```javascript
+function Maybe(val){
+    if (val != null) {
+        return new Just(val); 
+    } else {
+        return new Nothing();    
+    }
+}
+
+```
+
+---
+
+# Nothing
+
+```javascript
+function Nothing(){
+                                   
+                              
+     
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+                                                     
+
+                                                             
+```
+
+???
+
+Start with a Constructor, and have it inherit from Maybe
+
+---
+
+# Nothing
+
+```javascript
+function Nothing(){
+                                   
+                              
+     
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+Nothing.prototype.fmap = function() { return this; };
+
+                                                             
+```
+
+???
+
+Add the fmap method, which just returns this.
+remember in our do method, if the value didn't exist we just short circuited and returned this
+
+---
+
+# Nothing
+
+```javascript
+function Nothing(){
+                                   
+                              
+     
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+Nothing.prototype.fmap = function() { return this; };
+
+Nothing.prototype.toString = function() { return 'Nothing'; };
+```
+
+???
+
+Simple toString, nice to have
+
+---
+
+# Nothing
+
+```javascript
+function Nothing(){
+    if(!(this instanceof Nothing)){
+        return new Nothing(); 
+    }
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+Nothing.prototype.fmap = function() { return this; };
+
+Nothing.prototype.toString = function() { return 'Nothing'; };
+```
+
+???
+
+Finally, we do a little check in the constructor, so we don't have to use new all over the place
+This making composing functors and using them as higher order fn's possible.
+similar to case class in scala
+
+LET PEOPLE READ THIS ALL
+
+---
+
+# Just
+
+```javascript
+function Just(val){
+                                
+                              
+     
+                         
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+                                    
+                                     
+  
+
+                                                                                           
+```
+
+---
+
+# Just
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+                         
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+                                    
+                                     
+  
+
+                                                                                           
+```
+
+---
+
+# Just
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+                                    
+                                     
+  
+
+                                                                                           
+```
+
+---
+
+# Just
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+    return Maybe(fn(this.__value__));
+};
+
+                                                                                           
+```
+
+---
+
+# Just
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+    return Maybe(fn(this.__value__));
+};
+
+Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
+```
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments.get();
+}
+```
+
+???
+
+Let's update this to use Maybe
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = user.fmap(BlogPosts.findByUser);
+
+    var postsIds = posts.fmap(_.map(post => post.id));
+    var comments = postIds.fmap(Comments.findMany);
+
+    return comments.get();
+}
+```
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = user.fmap(BlogPosts.findByUser);
+
+    var postsIds = posts.fmap(_.map(post => post.id));
+    var comments = postIds.fmap(Comments.findMany);
+
+*   return comments.get();
+}
+```
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = user.fmap(BlogPosts.findByUser);
+
+    var postsIds = posts.fmap(_.map(post => post.id));
+    var comments = postIds.fmap(Comments.findMany);
+
+    return comments;
+}
+```
+
+---
+
+# fmap helper fn
+
+```javascript
+function fmap(fn, functor){
+    return functor.fmap(fn);
+}
+```
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = user.fmap(BlogPosts.findByUser);
+
+    var postsIds = posts.fmap(_.map(post => post.id));
+    var comments = postIds.fmap(Comments.findMany);
+
+    return comments;
+}
+```
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = fmap(BlogPosts.findByUser, user);
+
+    var postsIds = fmap(_.map(post => post.id), posts);
+    var comments = fmap(Comments.findMany, postIds);
+
+    return comments;
+}
+```
+---
+
+# fmap helper fn
+
+```javascript
+function fmap(fn, functor){
+    if (!functor) {
+        return function(functor){
+            return functor.fmap(fn); 
+        }
+    }
+    return functor.fmap(fn);
+}
+```
+
+---
+
+# fmap helper fn
+
+```javascript
+function fmap(fn, functor){
+    if (!functor) {
+        return fmap.bind(null, fn); 
+    }
+    return functor.fmap(fn);
+}
+```
+
+---
+
+# Some code
+
+```javascript
+var findByUser = fmap(BlogPosts.findByUser);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = fmap(Comments.findMany);
+
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+```
+
+---
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+```
+
+???
+
+Back to our original code
+
+Going to introduce another function that gets the text for comments
+
+--
+```javascript
+function getCommentText(comment){
+    return comment.text || comment.title || null;
+}
+```
+
+???
+
+We check for title because text might be undefined
+
+--
+
+```javascript
+var comments = getAllUsersComments('fabien');
+var commentsText = fmap(getCommentText, comments);
+
+var output = fmap(join('\n'), comments);
+
+fmap(document.write, output);
+```
+
+???
+
+Here we get the comments
+map the commentText fn over
+join them with new line characters
+write them to a page
+
+---
+
+# some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+```
+
+```javascript
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+```
+
+--
+
+```javascript
+var comments = getAllUsersComments('fabien');
+*var commentstext = fmap(getCommentText, comments);
+
+var output = fmap(join('\n'), comments);
+
+fmap(document.write, output);
+```
+
+???
+
+Big problem here, we have nested stuff
+
+---
+
+# Nested Functor
+
+- The return value of getAllUsersComments is Maybe([comments]);
+
+--
+
+- The return value of getCommentText is Maybe([text]);
+
+--
+
+- When we fmap getCommentText over comments we end up with Maybe(Maybe([text]));
+
+--
+
+- This is because getCommentText will wrap, but the fmap will wrap as well
+
+--
+
+- What we need is some kind of flatten operation, like with arrays.
+
+---
+
+# flatmap
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+     return Maybe(fn(this.__value__));
+};
+
+Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
+```
+---
+
+# flatmap
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+*    return Maybe(fn(this.__value__));
+};
+
+Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
+```
+
+---
+
+# flatmap
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+    return Maybe(fn(this.__value__));
+};
+
+Just.prototype.flatmap = function(fn) {
+
+}
+
+Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
+```
+
+---
+
+# flatmap
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+    return Maybe(fn(this.__value__));
+};
+
+Just.prototype.flatmap = function(fn) {
+    return fn(this.__value__);
+}
+
+Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
+```
+
+???
+
+We'll also implement it for the Nothing type
+
+---
+
+# flatmap
+
+```javascript
+function Nothing(){
+    if(!(this instanceof Nothing)){
+        return new Nothing(); 
+    }
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+Nothing.prototype.fmap = function() { return this; };
+
+Nothing.prototype.toString = function() { return 'Nothing'; };
+```
+
+???
+
+Add the blank fn
+
+---
+
+# flatmap
+
+```javascript
+function Nothing(){
+    if(!(this instanceof Nothing)){
+        return new Nothing(); 
+    }
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+Nothing.prototype.fmap = function() { return this; };
+
+Nothing.prototype.flatmap = function() { };
+
+Nothing.prototype.toString = function() { return 'Nothing'; };
+```
+
+???
+
+This one is simple, simply return this;
+
+---
+
+# flatmap
+
+```javascript
+function Nothing(){
+    if(!(this instanceof Nothing)){
+        return new Nothing(); 
+    }
+}
+
+Nothing.prototype = Object.create(Maybe.prototype);
+
+Nothing.prototype.fmap = function() { return this; };
+
+Nothing.prototype.flatmap = function() { return this; };
+
+Nothing.prototype.toString = function() { return 'Nothing'; };
+```
+
+---
+
+# flatmap helper fn
+
+```javascript
+function flatmap(fn, functor){
+    return functor.flatmap(fn);
+}
+```
+
+---
+
+# flatmap helper fn
+
+```javascript
+function flatmap(fn, functor){
+    if (!functor) {
+        return function(functor) {
+            return functor.flatmap(fn); 
+        }
+    }
+    return functor.flatmap(fn);
+}
+```
+
+---
+
+# flatmap helper fn
+
+```javascript
+function flatmap(fn, functor){
+    if (!functor) {
+        return flatmap.bind(null, fn); 
+    }
+    return functor.flatmap(fn);
+}
+```
+
+---
+
+# some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+```
+
+```javascript
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+```
+
+```javascript
+var comments = getAllUsersComments('fabien');
+var commentstext = fmap(getCommentText, comments);
+
+var output = fmap(join('\n'), comments);
+
+fmap(document.write, output);
+```
+
+???
+
+So we have to use flatmap
+
+---
+
+# some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+```
+
+```javascript
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+```
+
+```javascript
+var comments = getAllUsersComments('fabien');
+var commentstext = flatmap(getCommentText, comments);
+
+var output = fmap(join('\n'), comments);
+
+fmap(document.write, output);
+```
+
+???
+
+Hey presto! it works!
+
+---
+
+# Monads
+
+Monads are extentions of Functors, all the laws of Functors apply to Monads
+
+--
+
+Monads give use the ability to not only apply "normal" functions to the value inside, but to apply functions that return a Monad to the value inside. 
+
+--
+
+The wording of this can get confusing, but think back to when we had the nested Maybe, it was Monads that allowed us to get rid of that nesting.
+
+???
+
+Talk about how the Types of monad must be the same for flattening
+
+For example a Promise can be a monad, and if we were to have a Promise inside of a Maybe, we can't flatten it, the Promise's value might not exist yet
+
+---
+
+# Promises
+
+ 
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js"></script>
+
+    <script>
+        var slideshow = remark.create({
+            highlightLines: true,
+            ratio: '16:9'
+        });
+    </script>
+  </body>
+</html>
