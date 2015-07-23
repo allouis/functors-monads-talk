@@ -1303,7 +1303,7 @@ We check for title because text might be undefined
 var comments = getAllUsersComments('fabien');
 var commentsText = fmap(_.map(getCommentText), comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ???
@@ -1340,7 +1340,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 var commentsText = fmap(_.map(getCommentText), comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ???
@@ -1374,7 +1374,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 *var commentsText = fmap(_.map(getCommentText), comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ???
@@ -1657,7 +1657,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 var commentsText = fmap(_.map(getCommentText), comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ???
@@ -1691,7 +1691,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 var commentsText = flatmap(_.map(getCommentText), comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ???
@@ -1727,7 +1727,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 var commentsText = commentToText(comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ---
@@ -1808,7 +1808,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 var commentsText = commentToText(comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ---
@@ -1839,7 +1839,7 @@ function getCommentText(comment){
 var comments = getAllUsersComments('fabien');
 var commentsText = commentToText(comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ---
@@ -1847,9 +1847,41 @@ fmap(document.write, output);
 # Some code
 
 ```javascript
-var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var findByUser = fmap(BlogPosts.findByUserAsPromise);
 var mapToPostIds = fmap(_.map(post => post.id));
-var findMany = flatmap(Comments.findManyAsPromise);
+var findMany = fmap(Comments.findManyAsPromise);
+var commentToText = flatmap(_.map(getCommentText));
+
+function getAllUsersComments(username){
+*   var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+fmap(_.map(document.write), output);
+```
+
+---
+
+# Some code
+
+```javascript
+*var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+*var findMany = flatmap(Comments.findManyAsPromise);
+var commentToText = flatmap(_.map(getCommentText));
 
 function getAllUsersComments(username){
     var user = Users.findAsPromise(username);
@@ -1867,12 +1899,341 @@ function getCommentText(comment){
 }
 
 var comments = getAllUsersComments('fabien');
-var commentsText = fmap(getCommentText, comments);
+var commentsText = commentToText(comments);
 
-fmap(document.write, output);
+fmap(_.map(document.write), output);
 ```
 
 ---
+
+# Some code
+
+```javascript
+var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = flatmap(Comments.findManyAsPromise);
+*var commentToText = fmap(_.map(getCommentText));
+
+function getAllUsersComments(username){
+    var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+fmap(_.map(document.write), output);
+```
+
+---
+
+# Some code
+
+```javascript
+var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = flatmap(Comments.findManyAsPromise);
+var commentToText = fmap(_.map(getCommentText));
+
+function getAllUsersComments(username){
+    var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+fmap(_.map(document.write), output);
+```
+
+???
+
+Can anyone see a problem with this??
+
+nested functors have fucked us
+
+---
+
+# Some code
+
+```javascript
+var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = flatmap(Comments.findManyAsPromise);
+var commentToText = fmap(_.map(getCommentText));
+
+function getAllUsersComments(username){
+    var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+*fmap(_.map(document.write), output);
+```
+
+---
+
+# Some code
+
+```javascript
+var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = flatmap(Comments.findManyAsPromise);
+var commentToText = fmap(_.map(getCommentText));
+*var write = document.write;
+
+function getAllUsersComments(username){
+    var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+fmap(_.map(write), output);
+```
+
+---
+
+# Some code
+
+```javascript
+var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = flatmap(Comments.findManyAsPromise);
+var commentToText = fmap(_.map(getCommentText));
+*var write = fmap(document.write);
+
+function getAllUsersComments(username){
+    var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+fmap(_.map(write), output);
+```
+
+---
+
+class: middle center
+
+Fin.
+
+---
+
+
+# Theory
+
+Wikipedia says:
+> A functor is a mapping between two categories
+
+???
+
+What does this mean?
+
+--
+
+> A functor `F` that maps from "C" to "D" is a mapping that: 
+
+>    - associates each object `X` in "C" to an object `F[X]` in "D" 
+
+???
+
+Explain that this might not mean anything, but will be explained in a sec
+Object can be thought of as a thing, in the category of numbers, an object is 1 or 5
+
+--
+
+>    - associates each morphism `X -> Y` in "C" to a morphism `F[X] -> F[Y]` in "D"
+
+???
+
+Explain again this will be done in a sec
+
+In the category of numbers, a morphism is + or *
+
+---
+
+# What do we have?
+
+- A "category" of JavaScript values(objects*), we'll call "C"
+
+--
+
+- A "category" of "wrapped" values(objects*), we'll call "D"
+
+--
+
+- A way of associating each value(object*) in "C" with a wrapped value (`F[X]`) using the `wrap` function
+
+--
+
+- A way of associating each function(morphism) that acts upon values in "C" to a morphism that act's upon values in "D", the `do` method.
+
+---
+
+class: middle center
+
+Fin.
+
+---
+
+# Nested Monads
+
+We spoke before about nested monads and using flatmap to flatten them.
+
+This only works if they're of the same type.
+
+???
+
+This is because if you have a promise in a maybe, you can't flatten, what if the value doesn't exist yet?
+
+--
+
+We're going to update our fmap helper function to deal with this.
+
+```javascript
+function fmap(fn, functor){
+    if (!functor) {
+        return fmap.bind(null, fn); 
+    }
+    return functor.fmap(fn);
+}
+```
+
+---
+
+# Nested Monads
+
+We spoke before about nested monads and using flatmap to flatten them.
+
+This only works if they're of the same type.
+
+
+We're going to update our fmap helper function to deal with this.
+
+```javascript
+function fmap(fn, functor){
+    if (!functor) {
+        return fmap.bind(null, fn); 
+    }
+    return functor.fmap(function(value){
+        return fn(value);
+    });
+}
+```
+
+---
+
+# Nested Monads
+
+We spoke before about nested monads and using flatmap to flatten them.
+
+This only works if they're of the same type.
+
+
+We're going to update our fmap helper function to deal with this.
+
+```javascript
+function fmap(fn, functor){
+    if (!functor) {
+        return fmap.bind(null, fn); 
+    }
+    return functor.fmap(function(value){
+        if (value.fmap) {
+            return fmap(fn, value); 
+        }
+        return fn(value);
+    });
+}
+```
+
+---
+
+
+# Some code
+
+```javascript
+var findByUser = flatmap(BlogPosts.findByUserAsPromise);
+var mapToPostIds = fmap(_.map(post => post.id));
+var findMany = flatmap(Comments.findManyAsPromise);
+var commentToText = fmap(_.map(getCommentText));
+
+function getAllUsersComments(username){
+    var user = Users.findAsPromise(username);
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+
+var comments = getAllUsersComments('fabien');
+var commentsText = commentToText(comments);
+
+fmap(_.map(document.write), output);
+```
+
 
 # Nested Monads
 
@@ -1979,56 +2340,6 @@ function flatmap(fn, monad){
 ```
 
 ---
-
-# So Functors huh?
-
-Wikipedia says:
-> A functor is a mapping between two categories
-
-???
-
-What does this mean?
-
---
-
-> A functor `F` that maps from "C" to "D" is a mapping that: 
-
->    - associates each object `X` in "C" to an object `F[X]` in "D" 
-
-???
-
-Explain that this might not mean anything, but will be explained in a sec
-Object can be thought of as a thing, in the category of numbers, an object is 1 or 5
-
---
-
->    - associates each morphism `X -> Y` in "C" to a morphism `F[X] -> F[Y]` in "D"
-
-???
-
-Explain again this will be done in a sec
-
-In the category of numbers, a morphism is + or *
-
----
-
-# What do we have?
-
-- A "category" of JavaScript values(objects*), we'll call "C"
-
---
-
-- A "category" of "wrapped" values(objects*), we'll call "D"
-
---
-
-- A way of associating each value(object*) in "C" with a wrapped value (`F[X]`) using the `wrap` function
-
---
-
-- A way of associating each function(morphism) that acts upon values in "C" to a morphism that act's upon values in "D", the `do` method.
-
-
  
  
     </textarea>
