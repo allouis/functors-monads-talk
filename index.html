@@ -632,6 +632,14 @@ Prototype keep memory usage down
 
 --
 
+  - Closest thing we have to a type system
+
+--
+
+  - Prototype saves on memory
+
+--
+
 - Use an fmap method, not do
 
 ???
@@ -642,11 +650,78 @@ Can use map, but personally prefer fmap, map is a bit common place
 
 --
 
+  - Standard name for this method, can also be called map (can get confusing though)
+
+--
+
 - Return a new Functor from the fmap method, don't mutate.
 
 ???
 
 Because why? because mutation of state causes bullshit problems
+
+--
+
+  - Mutation === fresh hell
+
+
+---
+
+# Mutation bug
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments.get();
+}
+
+```
+
+---
+
+# Mutation bug
+
+```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return user.get();
+}
+
+```
+
+
+---
+
+# Conventions
+
+Although technically our `wrap` function is a Functor, there are a few changes we should make.
+
+- Use a Constructor or Class
+
+
+  - Closest thing we have to a type system
+
+  - Prototype saves on memory
+
+- Use an fmap method, not do
+
+  - Standard name for this method, can also be called map (can get confusing though)
+
+- Return a new Functor from the fmap method, don't mutate.
+
+  - Mutation === fresh hell
 
 --
 
@@ -660,19 +735,23 @@ Not essential, but debugging gets a hella lot easier
 
 # Maybe
 
-The wrap Functor that we created previous is one of the most well known.
+The wrap Functor that we created previously is one of the most well known.
 
-It's called the Maybe or Option Functor.
+- It's called the Maybe or Option Functor.
 
-It has two subtypes:
-
---
-
-- Just - This is the Functor that actually has a value inside.
+- It has two subtypes:
 
 --
 
-- Nothing - This, suprisingly, has nothing inside.
+  - Just - This is the Functor that actually has a value inside.
+
+--
+
+  - Nothing - This, suprisingly, has nothing inside.
+
+???
+
+Let's implement it!
 
 ---
 
@@ -691,6 +770,10 @@ function Maybe(val){
 
 ```
 
+???
+
+Start with an empty constructor
+
 ---
 
 # Maybe
@@ -708,6 +791,10 @@ function Maybe(val){
 
 ```
 
+???
+
+if we got a value, stick it in a Just
+
 ---
 
 # Maybe
@@ -724,6 +811,12 @@ function Maybe(val){
 }
 
 ```
+
+???
+
+Otherwise stick it in nothing.
+
+Let's start with the nothing definition
 
 ---
 
@@ -839,6 +932,10 @@ Just.prototype = Object.create(Maybe.prototype);
                                                                                            
 ```
 
+???
+
+Blank constructor and inheritance
+
 ---
 
 # Just
@@ -860,6 +957,10 @@ Just.prototype = Object.create(Maybe.prototype);
                                                                                            
 ```
 
+???
+
+Chuck in that instance of check we had before
+
 ---
 
 # Just
@@ -881,6 +982,14 @@ Just.prototype = Object.create(Maybe.prototype);
                                                                                            
 ```
 
+???
+
+We've got a value now, and the fmap method won't close ver it like it did in wrap
+
+So we need to store it.
+
+Notice this is private as FUCK
+
 ---
 
 # Just
@@ -901,6 +1010,14 @@ Just.prototype.fmap = function(fn) {
 
                                                                                            
 ```
+
+???
+
+fmap is simple, we call the function on the value, and wrap it back up in maybe
+
+i've seen implementations that wrap in Just - they are wrong.
+
+fn might return null it is javascript after all :DERP:
 
 ---
 
@@ -923,11 +1040,15 @@ Just.prototype.fmap = function(fn) {
 Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
 ```
 
+???
+
+Cute lil toString method.
+
 ---
 
 # Some code
 
-```javascript
+.code-left[```javascript
 function getAllUsersComments(username){
     var user = wrap(Users.find(username));
 
@@ -938,7 +1059,20 @@ function getAllUsersComments(username){
 
     return comments.get();
 }
-```
+```]
+
+.code-right[```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments.get();
+}
+```]
 
 ???
 
@@ -948,7 +1082,50 @@ Let's update this to use Maybe
 
 # Some code
 
-```javascript
+.code-left[```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments.get();
+}
+```]
+
+.code-right[```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments.get();
+}
+```]
+
+---
+
+# Some code
+
+.code-left[```javascript
+function getAllUsersComments(username){
+    var user = wrap(Users.find(username));
+
+    var posts = user.do(BlogPosts.findByUser);
+
+    var postsIds = posts.do(_.map(post => post.id));
+    var comments = postIds.do(Comments.findMany);
+
+    return comments.get();
+}
+```]
+
+.code-right[```javascript
 function getAllUsersComments(username){
     var user = Maybe(Users.find(username));
 
@@ -959,7 +1136,8 @@ function getAllUsersComments(username){
 
     return comments.get();
 }
-```
+```]
+
 ---
 
 # Some code
@@ -1110,7 +1288,7 @@ Going to introduce another function that gets the text for comments
 
 --
 ```javascript
-function getCommentText(comment){
+function getCommentText(comments){
     return comment.text || comment.title || null;
 }
 ```
@@ -1123,9 +1301,7 @@ We check for title because text might be undefined
 
 ```javascript
 var comments = getAllUsersComments('fabien');
-var commentsText = fmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = fmap(_.map(getCommentText), comments);
 
 fmap(document.write, output);
 ```
@@ -1160,13 +1336,43 @@ function getCommentText(comment){
 }
 ```
 
---
+```javascript
+var comments = getAllUsersComments('fabien');
+var commentsText = fmap(_.map(getCommentText), comments);
+
+fmap(document.write, output);
+```
+
+???
+
+Big problem here, we have nested stuff
+
+---
+
+# Some code
+
+```javascript
+function getAllUsersComments(username){
+    var user = Maybe(Users.find(username));
+
+    var posts = findByUser(user);
+
+    var postsIds = mapToPostIds(posts);
+    var comments = findMany(postIds);
+
+    return comments;
+}
+```
+
+```javascript
+function getCommentText(comment){
+    return Maybe(comment.text || comment.title);
+}
+```
 
 ```javascript
 var comments = getAllUsersComments('fabien');
-*var commentstext = fmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+*var commentsText = fmap(_.map(getCommentText), comments);
 
 fmap(document.write, output);
 ```
@@ -1199,24 +1405,14 @@ Big problem here, we have nested stuff
 
 ---
 
-# flatmap
+class: middle center
 
-```javascript
-function Just(val){
-    if(!(this instanceof Just)){
-        return new Just(val); 
-    }
-    this.__value__ = val;
-}
+# flatmap!
 
-Just.prototype = Object.create(Maybe.prototype);
+???
 
-Just.prototype.fmap = function(fn) {
-     return Maybe(fn(this.__value__));
-};
+Let's start with Just
 
-Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
-```
 ---
 
 # flatmap
@@ -1232,11 +1428,42 @@ function Just(val){
 Just.prototype = Object.create(Maybe.prototype);
 
 Just.prototype.fmap = function(fn) {
-*    return Maybe(fn(this.__value__));
+    return Maybe(fn(this.__value__));
 };
 
 Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
 ```
+
+???
+
+click next
+here we see that Just calls the fn on the value, then wraps it in another maybe
+
+
+---
+
+# flatmap
+
+```javascript
+function Just(val){
+    if(!(this instanceof Just)){
+        return new Just(val); 
+    }
+    this.__value__ = val;
+}
+
+Just.prototype = Object.create(Maybe.prototype);
+
+Just.prototype.fmap = function(fn) {
+*   return Maybe(fn(this.__value__));
+};
+
+Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
+```
+
+???
+
+flatmap should have the same function signature
 
 ---
 
@@ -1262,6 +1489,9 @@ Just.prototype.flatmap = function(fn) {
 
 Just.prototype.toString = function() { return 'Just(' + this.__value__.toString() + ')'; };
 ```
+
+???
+we are expecting fn here to return a Maybe, so lets just call the fn, and not rewrap
 
 ---
 
@@ -1358,6 +1588,10 @@ Nothing.prototype.flatmap = function() { return this; };
 Nothing.prototype.toString = function() { return 'Nothing'; };
 ```
 
+???
+
+Also gonna creat a flatmap helper fn like the fmap one
+
 ---
 
 # flatmap helper fn
@@ -1421,9 +1655,7 @@ function getCommentText(comment){
 
 ```javascript
 var comments = getAllUsersComments('fabien');
-var commentstext = fmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = fmap(_.map(getCommentText), comments);
 
 fmap(document.write, output);
 ```
@@ -1457,9 +1689,7 @@ function getCommentText(comment){
 
 ```javascript
 var comments = getAllUsersComments('fabien');
-var commentsText = flatmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = flatmap(_.map(getCommentText), comments);
 
 fmap(document.write, output);
 ```
@@ -1473,7 +1703,7 @@ Hey presto! it works!
 # Some code
 
 ```javascript
-var flatmapGetCommentText = flatmap(getCommentText);
+var commentToText = flatmap(_.map(getCommentText));
 
 function getAllUsersComments(username){
     var user = Maybe(Users.find(username));
@@ -1495,9 +1725,7 @@ function getCommentText(comment){
 
 ```javascript
 var comments = getAllUsersComments('fabien');
-var commentsText = flatmapGetCommentText(comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = commentToText(comments);
 
 fmap(document.write, output);
 ```
@@ -1560,6 +1788,7 @@ Promise.prototype.flatmap = Promise.prototype.then;
 var findByUser = fmap(BlogPosts.findByUser);
 var mapToPostIds = fmap(_.map(post => post.id));
 var findMany = fmap(Comments.findMany);
+var commentToText = flatmap(_.map(getCommentText));
 
 function getAllUsersComments(username){
     var user = Maybe(Users.find(username));
@@ -1577,9 +1806,7 @@ function getCommentText(comment){
 }
 
 var comments = getAllUsersComments('fabien');
-var commentstext = flatmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = commentToText(comments);
 
 fmap(document.write, output);
 ```
@@ -1589,12 +1816,13 @@ fmap(document.write, output);
 # Some code
 
 ```javascript
-var findByUser = fmap(BlogPosts.findByUser);
+*var findByUser = fmap(BlogPosts.findByUserAsPromise);
 var mapToPostIds = fmap(_.map(post => post.id));
-var findMany = fmap(Comments.findMany);
+*var findMany = fmap(Comments.findManyAsPromise);
+var commentToText = flatmap(_.map(getCommentText));
 
 function getAllUsersComments(username){
-    var user = Maybe(Users.find(username));
+*   var user = Maybe(Users.findAsPromise(username));
 
     var posts = findByUser(user);
 
@@ -1609,41 +1837,7 @@ function getCommentText(comment){
 }
 
 var comments = getAllUsersComments('fabien');
-var commentstext = flatmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
-
-fmap(document.write, output);
-```
-
----
-
-# Some code
-
-```javascript
-var findByUser = fmap(BlogPosts.findByUserAsPromise);
-var mapToPostIds = fmap(_.map(post => post.id));
-var findMany = fmap(Comments.findManyAsPromise);
-
-function getAllUsersComments(username){
-    var user = Maybe(Users.findAsPromise(username));
-
-    var posts = findByUser(user);
-
-    var postsIds = mapToPostIds(posts);
-    var comments = findMany(postIds);
-
-    return comments;
-}
-
-function getCommentText(comment){
-    return Maybe(comment.text || comment.title);
-}
-
-var comments = getAllUsersComments('fabien');
-var commentstext = flatmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = commentToText(comments);
 
 fmap(document.write, output);
 ```
@@ -1673,9 +1867,7 @@ function getCommentText(comment){
 }
 
 var comments = getAllUsersComments('fabien');
-var commentstext = fmap(getCommentText, comments);
-
-var output = fmap(join('\n'), comments);
+var commentsText = fmap(getCommentText, comments);
 
 fmap(document.write, output);
 ```
